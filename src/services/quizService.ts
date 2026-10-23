@@ -171,7 +171,7 @@ export const quizService = {
     // Do not offer a share code until the quiz is saved to the shared database.
     const synced = await pushQuizToSupabase(newQuiz);
     if (!synced) {
-      throw new Error('Quiz saved only in this browser; Supabase sync failed.');
+      throw new Error('Supabase did not confirm saving this quiz. Check the browser console for details.');
     }
     return newQuiz;
   },
@@ -209,7 +209,7 @@ export const quizService = {
 
     const synced = await pushSubmissionToSupabase(fullSubmission);
     if (!synced) {
-      throw new Error('Student result could not be saved to the shared database.');
+      throw new Error('Supabase did not confirm saving the student result. Check the browser console for details.');
     }
     return fullSubmission;
   },
