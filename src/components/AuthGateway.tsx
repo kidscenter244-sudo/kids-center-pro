@@ -21,6 +21,7 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({
   const [studentName, setStudentName] = useState('');
   const [quizCode, setQuizCode] = useState(initialQuizCode);
   const [studentError, setStudentError] = useState('');
+  const [isCheckingQuiz, setIsCheckingQuiz] = useState(false);
 
   // Teacher credentials state
   const [teacherEmail, setTeacherEmail] = useState('');
@@ -30,8 +31,9 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({
   const VALID_TEACHER_EMAIL = 'teacher@kidscenter.com';
   const VALID_TEACHER_PASSWORD = 'kids123';
 
-  const handleStudentSubmit = (e: React.FormEvent) => {
+  const handleStudentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isCheckingQuiz) return;
     setStudentError('');
 
     if (!studentName.trim()) {
@@ -44,15 +46,24 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({
       return;
     }
 
-    const quiz = quizService.getQuizByIdOrCode(quizCode);
-    if (!quiz) {
-      setStudentError('Quiz code is incorrect or not found. Please verify the code.');
-      sound.playIncorrect();
-      return;
-    }
+    setIsCheckingQuiz(true);
+    try {
+      const quiz = await quizService.getQuizByIdOrCode(quizCode);
+      if (!quiz) {
+        setStudentError('Quiz code was not found. Check the code and make sure the teacher has successfully saved it online.');
+        sound.playIncorrect();
+        return;
+      }
 
-    sound.playClick();
-    onStudentLogin(studentName.trim(), quiz);
+      sound.playClick();
+      onStudentLogin(studentName.trim(), quiz);
+    } catch (err) {
+      console.error('Could not load quiz from Supabase', err);
+      setStudentError('Could not connect to the shared quiz database. Please try again in a moment.');
+      sound.playIncorrect();
+    } finally {
+      setIsCheckingQuiz(false);
+    }
   };
 
   const handleTeacherSubmit = (e: React.FormEvent) => {
@@ -175,9 +186,10 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({
 
             <button
               type="submit"
+              disabled={isCheckingQuiz}
               className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl text-sm transition-all shadow-md shadow-slate-900/10 active:scale-98 flex items-center justify-center gap-2 cursor-pointer mt-2"
             >
-              <span>Start Quiz & Challenge Now</span>
+              <span>{isCheckingQuiz ? 'Checking quiz code…' : 'Start Quiz & Challenge Now'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
 
