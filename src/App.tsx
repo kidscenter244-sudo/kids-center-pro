@@ -14,6 +14,7 @@ import { QuizzesList } from './components/QuizzesList';
 import { ShareQuizModal } from './components/ShareQuizModal';
 import { Quiz, QuizSubmission } from './types/quiz';
 import { quizService, subscribeToSync } from './services/quizService';
+import { subscribeToSupabaseRealtime } from './services/supabaseService';
 
 export default function App() {
   // 1. Splash screen for 2 seconds
@@ -57,12 +58,24 @@ export default function App() {
       // Ignored
     }
 
-    const unsubscribe = subscribeToSync(() => {
+    const unsubscribeLocal = subscribeToSync(() => {
       reloadData();
     });
 
+    // Refresh open browsers automatically when shared quizzes or results change.
+    let refreshQueued = false;
+    const unsubscribeRealtime = subscribeToSupabaseRealtime(() => {
+      if (refreshQueued) return;
+      refreshQueued = true;
+      window.setTimeout(() => {
+        refreshQueued = false;
+        void quizService.syncWithSupabase().then(reloadData);
+      }, 250);
+    });
+
     return () => {
-      unsubscribe();
+      unsubscribeLocal();
+      unsubscribeRealtime();
     };
   }, [reloadData]);
 
