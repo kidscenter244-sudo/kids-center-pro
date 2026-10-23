@@ -195,7 +195,7 @@ export const quizService = {
     }
   },
 
-  saveSubmission(submission: Omit<QuizSubmission, 'id' | 'submittedAt'>): QuizSubmission {
+  async saveSubmission(submission: Omit<QuizSubmission, 'id' | 'submittedAt'>): Promise<QuizSubmission> {
     const submissions = this.getSubmissions();
     const fullSubmission: QuizSubmission = {
       ...submission,
@@ -207,9 +207,10 @@ export const quizService = {
     localStorage.setItem(SUBMISSIONS_STORAGE_KEY, JSON.stringify(updated));
     notifySync();
 
-    // Async push to Supabase
-    pushSubmissionToSupabase(fullSubmission).catch(() => {});
-
+    const synced = await pushSubmissionToSupabase(fullSubmission);
+    if (!synced) {
+      throw new Error('Student result could not be saved to the shared database.');
+    }
     return fullSubmission;
   },
 
