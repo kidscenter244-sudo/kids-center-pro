@@ -227,3 +227,24 @@ export async function fetchSubmissionsFromSupabase(quizId?: string): Promise<Qui
     return null;
   }
 }
+
+
+/** Subscribe to shared quiz/result changes from Supabase Realtime. */
+export function subscribeToSupabaseRealtime(onChange: () => void): () => void {
+  const client = getSupabaseClient();
+  if (!client) return () => {};
+
+  const channel = client
+    .channel('kidscenter-shared-data-realtime')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'quizzes' }, onChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'submissions' }, onChange)
+    .subscribe((status) => {
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        console.error('Supabase Realtime subscription status:', status);
+      }
+    });
+
+  return () => {
+    void client.removeChannel(channel);
+  };
+}
