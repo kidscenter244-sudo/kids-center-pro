@@ -133,12 +133,12 @@ export async function pushQuizToSupabase(quiz: Quiz): Promise<boolean> {
     });
     if (error) {
       console.error('Supabase: failed to save quiz', error);
-      return false;
+      throw new Error(error.message || 'Supabase rejected the quiz save request.');
     }
     return true;
   } catch (err) {
     console.error('Supabase: failed to save quiz', err);
-    return false;
+    throw err instanceof Error ? err : new Error(String(err));
   }
 }
 
@@ -187,12 +187,12 @@ export async function pushSubmissionToSupabase(sub: QuizSubmission): Promise<boo
     });
     if (error) {
       console.error('Supabase: failed to save submission', error);
-      return false;
+      throw new Error(error.message || 'Supabase rejected the student result save request.');
     }
     return true;
   } catch (err) {
     console.error('Supabase: failed to save submission', err);
-    return false;
+    throw err instanceof Error ? err : new Error(String(err));
   }
 }
 
