@@ -72,7 +72,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
   };
 
   // Submit exam
-  const handleSubmitExam = useCallback(() => {
+  const handleSubmitExam = useCallback(async () => {
     if (!activeQuiz) return;
     if (timerRef.current) clearInterval(timerRef.current);
 
@@ -100,17 +100,22 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
     setDetailedAnswers(records);
     setStage('results');
 
-    // Save to service & server
-    quizService.saveSubmission({
-      quizId: activeQuiz.id,
-      quizTitle: activeQuiz.config.title || 'Math Quiz - kidscenter PRO',
-      studentName: studentName.trim() || 'Anonymous Student',
-      score,
-      totalQuestions: questions.length,
-      percentage,
-      timeSpentSeconds: spent,
-      answers: records,
-    });
+    // Persist the result to the shared database before reporting success.
+    try {
+      await quizService.saveSubmission({
+        quizId: activeQuiz.id,
+        quizTitle: activeQuiz.config.title || 'Math Quiz - kidscenter PRO',
+        studentName: studentName.trim() || 'Anonymous Student',
+        score,
+        totalQuestions: questions.length,
+        percentage,
+        timeSpentSeconds: spent,
+        answers: records,
+      });
+    } catch (err) {
+      console.error('Student result could not be synced to Supabase', err);
+      window.alert('تم عرض النتيجة، لكن تعذّر حفظها في قاعدة البيانات المشتركة. أبلغ المعلم وجرّب الاتصال مرة أخرى.');
+    }
 
     sound.playVictory();
     confetti({
