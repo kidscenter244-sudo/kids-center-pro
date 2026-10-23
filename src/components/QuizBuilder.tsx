@@ -157,7 +157,7 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groups, previewSeed]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     sound.playVictory();
 
@@ -183,8 +183,13 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
       divisionExactOnly,
     };
 
-    const newQuiz = quizService.saveQuiz(config);
-    onQuizCreated(newQuiz);
+    try {
+      const newQuiz = await quizService.saveQuiz(config);
+      onQuizCreated(newQuiz);
+    } catch (err) {
+      console.error('Quiz could not be synced to Supabase', err);
+      window.alert('الاختبار اتحفظ على هذا المتصفح فقط، لكن المزامنة مع قاعدة البيانات فشلت. راجع إعدادات Supabase والجداول، ثم جرّب مرة أخرى قبل مشاركة الكود مع الطلاب.');
+    }
   };
 
   return (
