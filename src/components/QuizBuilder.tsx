@@ -188,7 +188,8 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
       onQuizCreated(newQuiz);
     } catch (err) {
       console.error('Quiz could not be synced to Supabase', err);
-      window.alert('الاختبار اتحفظ على هذا المتصفح فقط، لكن المزامنة مع قاعدة البيانات فشلت. راجع إعدادات Supabase والجداول، ثم جرّب مرة أخرى قبل مشاركة الكود مع الطلاب.');
+      const detail = err instanceof Error ? err.message : String(err);
+      window.alert('فشل حفظ الاختبار في قاعدة البيانات المشتركة. لا تشارك الكود قبل إصلاح المشكلة. سبب الخطأ: ' + detail);
     }
   };
 
