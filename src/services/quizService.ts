@@ -126,17 +126,31 @@ export const quizService = {
     }
   },
 
-  getQuizByIdOrCode(idOrCode: string): Quiz | null {
-    const quizzes = this.getQuizzes();
+  async getQuizByIdOrCode(idOrCode: string): Promise<Quiz | null> {
     const clean = idOrCode.trim().toUpperCase();
-    return (
-      quizzes.find(
-        (q) => q.id === idOrCode || q.code.toUpperCase() === clean
-      ) || null
+    const localMatch = this.getQuizzes().find(
+      (q) => q.id === idOrCode || q.code.toUpperCase() === clean
     );
+    if (localMatch) return localMatch;
+
+    // A student's browser has separate localStorage; query the shared database.
+    const remoteQuizzes = await fetchQuizzesFromSupabase();
+    if (!remoteQuizzes) return null;
+    const remoteMatch = remoteQuizzes.find(
+      (q) => q.id === idOrCode || q.code.toUpperCase() === clean
+    );
+    if (remoteMatch) {
+      const merged = [
+        remoteMatch,
+        ...this.getQuizzes().filter((q) => q.id !== remoteMatch.id),
+      ];
+      localStorage.setItem(QUIZZES_STORAGE_KEY, JSON.stringify(merged));
+      notifySync();
+    }
+    return remoteMatch || null;
   },
 
-  saveQuiz(config: QuizConfig): Quiz {
+  async saveQuiz(config: QuizConfig): Promise<Quiz> {
     const quizzes = this.getQuizzes();
     const id = `quiz_${Date.now()}`;
     const code = generateQuizCode();
@@ -154,9 +168,11 @@ export const quizService = {
     localStorage.setItem(QUIZZES_STORAGE_KEY, JSON.stringify(updated));
     notifySync();
 
-    // Async push to Supabase
-    pushQuizToSupabase(newQuiz).catch(() => {});
-
+    // Do not offer a share code until the quiz is saved to the shared database.
+    const synced = await pushQuizToSupabase(newQuiz);
+    if (!synced) {
+      throw new Error('Quiz saved only in this browser; Supabase sync failed.');
+    }
     return newQuiz;
   },
 
