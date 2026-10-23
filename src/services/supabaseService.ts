@@ -61,23 +61,19 @@ ON public.submissions FOR DELETE USING (true);
 `;
 
 export function getStoredSupabaseConfig(): SupabaseConfig {
-  try {
-    const raw = localStorage.getItem(SUPABASE_CONFIG_STORAGE_KEY);
-    if (raw) {
-      return JSON.parse(raw);
-    }
-  } catch {
-    // Ignored
-  }
-
-  // Fallback to environment variables if provided
+  // Prefer Vercel's deployed configuration over stale localStorage values.
   const envUrl = (import.meta as unknown as { env: Record<string, string> }).env?.VITE_SUPABASE_URL || '';
   const envKey = (import.meta as unknown as { env: Record<string, string> }).env?.VITE_SUPABASE_ANON_KEY || '';
+  if (envUrl && envKey) return { url: envUrl, anonKey: envKey };
 
-  return {
-    url: envUrl,
-    anonKey: envKey,
-  };
+  // Manual configuration remains available when build-time variables are absent.
+  try {
+    const raw = localStorage.getItem(SUPABASE_CONFIG_STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    // Ignore malformed browser configuration.
+  }
+  return { url: envUrl, anonKey: envKey };
 }
 
 export function saveStoredSupabaseConfig(config: SupabaseConfig) {
@@ -135,8 +131,13 @@ export async function pushQuizToSupabase(quiz: Quiz): Promise<boolean> {
       questions: quiz.questions,
       created_at: quiz.createdAt,
     });
-    return !error;
-  } catch {
+    if (error) {
+      console.error('Supabase: failed to save quiz', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Supabase: failed to save quiz', err);
     return false;
   }
 }
@@ -150,7 +151,10 @@ export async function fetchQuizzesFromSupabase(): Promise<Quiz[] | null> {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error || !data) return null;
+    if (error || !data) {
+      if (error) console.error('Supabase: failed to fetch quizzes', error);
+      return null;
+    }
 
     return data.map((item) => ({
       id: item.id,
@@ -159,7 +163,8 @@ export async function fetchQuizzesFromSupabase(): Promise<Quiz[] | null> {
       questions: item.questions,
       createdAt: item.created_at,
     }));
-  } catch {
+  } catch (err) {
+    console.error('Supabase: failed to fetch quizzes', err);
     return null;
   }
 }
@@ -180,8 +185,13 @@ export async function pushSubmissionToSupabase(sub: QuizSubmission): Promise<boo
       answers: sub.answers,
       submitted_at: sub.submittedAt,
     });
-    return !error;
-  } catch {
+    if (error) {
+      console.error('Supabase: failed to save submission', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Supabase: failed to save submission', err);
     return false;
   }
 }
@@ -195,7 +205,10 @@ export async function fetchSubmissionsFromSupabase(quizId?: string): Promise<Qui
       query = query.eq('quiz_id', quizId);
     }
     const { data, error } = await query;
-    if (error || !data) return null;
+    if (error || !data) {
+      if (error) console.error('Supabase: failed to fetch submissions', error);
+      return null;
+    }
 
     return data.map((item) => ({
       id: item.id,
@@ -209,7 +222,8 @@ export async function fetchSubmissionsFromSupabase(quizId?: string): Promise<Qui
       submittedAt: item.submitted_at,
       answers: item.answers,
     }));
-  } catch {
+  } catch (err) {
+    console.error('Supabase: failed to fetch submissions', err);
     return null;
   }
 }
