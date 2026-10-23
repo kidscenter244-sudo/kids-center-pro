@@ -204,7 +204,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => {
+            onClick={async () => {
+              await quizService.syncWithSupabase();
               onRefresh();
               sound.playClick();
             }}
