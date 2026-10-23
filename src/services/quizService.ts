@@ -112,12 +112,12 @@ export const quizService = {
   async syncWithSupabase(): Promise<void> {
     try {
       const remoteQuizzes = await fetchQuizzesFromSupabase();
-      if (remoteQuizzes && remoteQuizzes.length > 0) {
+      if (remoteQuizzes !== null) {
         localStorage.setItem(QUIZZES_STORAGE_KEY, JSON.stringify(remoteQuizzes));
       }
 
       const remoteSubs = await fetchSubmissionsFromSupabase();
-      if (remoteSubs && remoteSubs.length > 0) {
+      if (remoteSubs !== null) {
         localStorage.setItem(SUBMISSIONS_STORAGE_KEY, JSON.stringify(remoteSubs));
       }
       notifySync();
