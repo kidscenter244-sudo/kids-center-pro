@@ -73,7 +73,7 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({
       sound.playClick();
       onTeacherLogin();
     } else {
-      setTeacherError('رمز المرور غير صحيح. يرجى المحاولة مرة أخرى');
+      setTeacherError('Incorrect password. Please try again.');
       sound.playIncorrect();
     }
   };
@@ -203,13 +203,13 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
                 <KeyRound className="w-3.5 h-3.5 text-indigo-600" />
-                <span>رمز المرور / Teacher Password:</span>
+                <span>Teacher Password:</span>
               </label>
               <input
                 type="password"
                 value={teacherPassword}
                 onChange={(e) => setTeacherPassword(e.target.value)}
-                placeholder="أدخل رمز مرور المعلم..."
+                placeholder="Enter teacher password..."
                 required
                 autoFocus
                 className="w-full bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white rounded-2xl px-4 py-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 font-mono tracking-widest"
@@ -226,7 +226,7 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({
               type="submit"
               className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-sm transition-all shadow-md shadow-indigo-600/20 active:scale-98 flex items-center justify-center gap-2 cursor-pointer mt-2"
             >
-              <span>دخول لوحة التحكم (Teacher Access)</span>
+              <span>Open Teacher Dashboard</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
