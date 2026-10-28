@@ -6,7 +6,8 @@ import {
   pushSubmissionToSupabase, 
   fetchSubmissionsFromSupabase,
   deleteSubmissionsFromSupabase,
-  deleteQuizFromSupabase
+  deleteQuizFromSupabase,
+  deleteAllQuizzesFromSupabase
 } from './supabaseService';
 
 const QUIZZES_STORAGE_KEY = 'kidscenter_pro_quizzes_v3';
@@ -177,6 +178,15 @@ export const quizService = {
       console.warn('Supabase sync skipped or failed (local save active):', err);
     }
     return newQuiz;
+  },
+
+  async deleteAllQuizzes(): Promise<boolean> {
+    const success = await deleteAllQuizzesFromSupabase();
+    if (!success) return false;
+    localStorage.setItem(QUIZZES_STORAGE_KEY, JSON.stringify([]));
+    localStorage.setItem(SUBMISSIONS_STORAGE_KEY, JSON.stringify([]));
+    notifySync();
+    return true;
   },
 
   async deleteQuiz(id: string): Promise<void> {
