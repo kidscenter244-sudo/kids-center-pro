@@ -134,7 +134,7 @@ export default function App() {
   // Teacher previews quiz as student
   const handleTeacherTestQuiz = (quiz: Quiz) => {
     setStudentSession({
-      studentName: 'معلم تجريبي',
+      studentName: 'Teacher Preview',
       quiz,
     });
   };
