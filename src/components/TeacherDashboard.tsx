@@ -329,7 +329,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
         <div className="flex items-center justify-between mb-2 px-1">
           <span className="text-xs font-extrabold text-slate-700 flex items-center gap-1.5">
             <Filter className="w-3.5 h-3.5 text-indigo-600" />
-            <span>اختر الاختبار لعرض استجاباته الخاصة (Filter by Quiz):</span>
+            <span>Choose a quiz to filter its submissions:</span>
           </span>
           <span className="text-[11px] text-slate-400 font-medium">
             {quizOptions.length} quizzes created
@@ -347,7 +347,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>جميع الاختبارات (All Quizzes)</span>
+            <span>All Quizzes</span>
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
               internalQuizFilter === 'all' ? 'bg-white/20 text-white' : 'bg-white text-slate-700'
             }`}>
@@ -396,18 +396,18 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                 Code: {currentSelectedQuiz.code}
               </span>
               <span className="text-xs text-indigo-800 font-extrabold">
-                استجابات هذا الامتحان فقط (Viewing only this quiz's results)
+                Viewing only this quiz's results
               </span>
             </div>
             <h2 className="text-lg font-black text-slate-900">
               {currentSelectedQuiz.config.title}
             </h2>
             <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
-              <span>الأسئلة: <strong className="text-slate-800 math-font">{currentSelectedQuiz.questions.length}</strong></span>
+              <span>Questions: <strong className="text-slate-800 math-font">{currentSelectedQuiz.questions.length}</strong></span>
               <span>•</span>
-              <span>الوقت: <strong className="text-slate-800">{currentSelectedQuiz.config.timeMinutes === 0 ? 'مفتوح (Unlimited)' : `${currentSelectedQuiz.config.timeMinutes} دقائق`}</strong></span>
+              <span>Time: <strong className="text-slate-800">{currentSelectedQuiz.config.timeMinutes === 0 ? 'Unlimited' : `${currentSelectedQuiz.config.timeMinutes} mins`}</strong></span>
               <span>•</span>
-              <span>الاستجابات الحالية: <strong className="text-indigo-600 math-font">{activeQuizSubmissions.length}</strong> طالب</span>
+              <span>Current submissions: <strong className="text-indigo-600 math-font">{activeQuizSubmissions.length}</strong></span>
             </div>
           </div>
 
@@ -416,7 +416,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
               onClick={() => handleFilterChange('all')}
               className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer shadow-sm"
             >
-              عرض جميع الاختبارات
+              View All Quizzes
             </button>
 
             {activeQuizSubmissions.length > 0 && (
@@ -428,13 +428,13 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                     ? 'bg-rose-600 text-white animate-pulse'
                     : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
                 }`}
-                title="حذف استجابات هذا الامتحان نهائياً من الموقع وسوبابيس"
+                title="Permanently delete this quiz's submissions from the website and Supabase"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>
                   {confirmClear
-                    ? 'اضغط لتأكيد الحذف نهائياً'
-                    : 'مسح استجابات هذا الامتحان'}
+                    ? 'Click again to confirm permanent deletion'
+                    : 'Delete This Quiz's Submissions'}
                 </span>
               </button>
             )}
@@ -538,10 +538,10 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
               <Trash2 className="w-3.5 h-3.5" />
               <span>
                 {confirmClear
-                  ? 'تأكيد الحذف نهائياً'
+                  ? 'Confirm Permanent Deletion'
                   : internalQuizFilter === 'all'
-                  ? 'مسح الكل'
-                  : 'مسح استجابات الاختبار'}
+                  ? 'Clear All Submissions'
+                  : 'Clear Quiz Submissions'}
               </span>
             </button>
           )}
@@ -557,12 +557,12 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
           <h3 className="text-base font-bold text-slate-900 mb-1">
             {internalQuizFilter === 'all' 
               ? 'No Student Submissions Yet' 
-              : 'لا توجد استجابات لهذا الاختبار حتى الآن'}
+              : 'No submissions for this quiz yet'}
           </h3>
           <p className="text-xs text-slate-500 mb-4 max-w-sm mx-auto">
             {internalQuizFilter === 'all'
               ? 'Share the quiz link or code with your students. Each student\'s score and answers will appear here in real-time.'
-              : `شارك كود الاختبار (${currentSelectedQuiz?.code || ''}) مع الطلاب لتسجيل استجاباتهم وظهورها هنا مباشرة.`}
+              : `Share quiz code (${currentSelectedQuiz?.code || ''}) with students to collect submissions and see them here.`}
           </p>
           <button
             onClick={onGoToBuilder}
