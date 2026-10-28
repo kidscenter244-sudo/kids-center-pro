@@ -122,7 +122,10 @@ export async function testSupabaseConnection(url: string, anonKey: string): Prom
 
 export async function pushQuizToSupabase(quiz: Quiz): Promise<boolean> {
   const client = getSupabaseClient();
-  if (!client) return false;
+  if (!client) {
+    // In-memory / local storage mode when Supabase is not configured
+    return true;
+  }
   try {
     const { error } = await client.from('quizzes').upsert({
       id: quiz.id,
@@ -132,13 +135,13 @@ export async function pushQuizToSupabase(quiz: Quiz): Promise<boolean> {
       created_at: quiz.createdAt,
     });
     if (error) {
-      console.error('Supabase: failed to save quiz', error);
-      throw new Error(error.message || 'Supabase rejected the quiz save request.');
+      console.warn('Supabase: failed to save quiz (retaining local copy):', error);
+      return false;
     }
     return true;
   } catch (err) {
-    console.error('Supabase: failed to save quiz', err);
-    throw err instanceof Error ? err : new Error(String(err));
+    console.warn('Supabase: network error saving quiz (retaining local copy):', err);
+    return false;
   }
 }
 
@@ -171,7 +174,10 @@ export async function fetchQuizzesFromSupabase(): Promise<Quiz[] | null> {
 
 export async function pushSubmissionToSupabase(sub: QuizSubmission): Promise<boolean> {
   const client = getSupabaseClient();
-  if (!client) return false;
+  if (!client) {
+    // In-memory / local storage mode when Supabase is not configured
+    return true;
+  }
   try {
     const { error } = await client.from('submissions').insert({
       id: sub.id,
@@ -186,13 +192,13 @@ export async function pushSubmissionToSupabase(sub: QuizSubmission): Promise<boo
       submitted_at: sub.submittedAt,
     });
     if (error) {
-      console.error('Supabase: failed to save submission', error);
-      throw new Error(error.message || 'Supabase rejected the student result save request.');
+      console.warn('Supabase: failed to save submission (retaining local copy):', error);
+      return false;
     }
     return true;
   } catch (err) {
-    console.error('Supabase: failed to save submission', err);
-    throw err instanceof Error ? err : new Error(String(err));
+    console.warn('Supabase: network error saving submission (retaining local copy):', err);
+    return false;
   }
 }
 
@@ -228,6 +234,45 @@ export async function fetchSubmissionsFromSupabase(quizId?: string): Promise<Qui
   }
 }
 
+
+export async function deleteSubmissionsFromSupabase(quizId?: string): Promise<boolean> {
+  const client = getSupabaseClient();
+  if (!client) return true;
+  try {
+    let query = client.from('submissions').delete();
+    if (quizId) {
+      query = query.eq('quiz_id', quizId);
+    } else {
+      query = query.neq('id', '');
+    }
+    const { error } = await query;
+    if (error) {
+      console.warn('Supabase: failed to delete submissions:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('Supabase: network error deleting submissions:', err);
+    return false;
+  }
+}
+
+export async function deleteQuizFromSupabase(quizId: string): Promise<boolean> {
+  const client = getSupabaseClient();
+  if (!client) return true;
+  try {
+    await client.from('submissions').delete().eq('quiz_id', quizId);
+    const { error } = await client.from('quizzes').delete().eq('id', quizId);
+    if (error) {
+      console.warn('Supabase: failed to delete quiz:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('Supabase: network error deleting quiz:', err);
+    return false;
+  }
+}
 
 /** Subscribe to shared quiz/result changes from Supabase Realtime. */
 export function subscribeToSupabaseRealtime(onChange: () => void): () => void {

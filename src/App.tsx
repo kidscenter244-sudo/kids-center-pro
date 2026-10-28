@@ -16,13 +16,22 @@ import { Quiz, QuizSubmission } from './types/quiz';
 import { quizService, subscribeToSync } from './services/quizService';
 import { subscribeToSupabaseRealtime } from './services/supabaseService';
 
+const TEACHER_AUTH_KEY = 'kidscenter_teacher_logged_in_v1';
+
 export default function App() {
   // 1. Splash screen for 2 seconds
   const [showSplash, setShowSplash] = useState(true);
 
-  // 2. Auth & Navigation state
-  const [isTeacherLoggedIn, setIsTeacherLoggedIn] = useState(false);
-  const [activeTeacherTab, setActiveTeacherTab] = useState<'builder' | 'dashboard' | 'quizzes'>('builder');
+  // 2. Auth & Navigation state (Persisted in localStorage)
+  const [isTeacherLoggedIn, setIsTeacherLoggedIn] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(TEACHER_AUTH_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [activeTeacherTab, setActiveTeacherTab] = useState<'builder' | 'dashboard' | 'quizzes'>('quizzes');
+  const [selectedDashboardQuizId, setSelectedDashboardQuizId] = useState<string>('all');
 
   // Student exam state
   const [studentSession, setStudentSession] = useState<{
@@ -87,21 +96,38 @@ export default function App() {
     });
   };
 
-  // Teacher logs in with credentials
+  // Teacher logs in with password (persisted in localStorage)
   const handleTeacherLogin = () => {
+    try {
+      localStorage.setItem(TEACHER_AUTH_KEY, 'true');
+    } catch {
+      // Ignored
+    }
     setIsTeacherLoggedIn(true);
-    setActiveTeacherTab('builder');
+    setActiveTeacherTab('quizzes');
   };
 
   // Teacher logs out
   const handleTeacherLogout = () => {
+    try {
+      localStorage.removeItem(TEACHER_AUTH_KEY);
+    } catch {
+      // Ignored
+    }
     setIsTeacherLoggedIn(false);
     setStudentSession(null);
+  };
+
+  // Navigate to dashboard filtered for a specific quiz
+  const handleViewQuizSubmissions = (quizId: string) => {
+    setSelectedDashboardQuizId(quizId);
+    setActiveTeacherTab('dashboard');
   };
 
   // Teacher creates quiz
   const handleQuizCreated = (newQuiz: Quiz) => {
     reloadData();
+    setSelectedDashboardQuizId(newQuiz.id);
     setShareModalQuiz(newQuiz);
   };
 
@@ -192,7 +218,10 @@ export default function App() {
 
         {activeTeacherTab === 'dashboard' && (
           <TeacherDashboard
+            quizzes={quizzes}
             submissions={submissions}
+            selectedQuizId={selectedDashboardQuizId}
+            onSelectQuizId={setSelectedDashboardQuizId}
             onRefresh={reloadData}
             onGoToBuilder={() => setActiveTeacherTab('builder')}
           />
@@ -201,8 +230,10 @@ export default function App() {
         {activeTeacherTab === 'quizzes' && (
           <QuizzesList
             quizzes={quizzes}
+            submissions={submissions}
             onSelectQuizToShare={(quiz) => setShareModalQuiz(quiz)}
             onTakeQuiz={handleTeacherTestQuiz}
+            onViewSubmissions={handleViewQuizSubmissions}
             onGoToBuilder={() => setActiveTeacherTab('builder')}
             onRefresh={reloadData}
           />

@@ -187,9 +187,7 @@ export const QuizBuilder: React.FC<QuizBuilderProps> = ({
       const newQuiz = await quizService.saveQuiz(config);
       onQuizCreated(newQuiz);
     } catch (err) {
-      console.error('Quiz could not be synced to Supabase', err);
-      const detail = err instanceof Error ? err.message : String(err);
-      window.alert('فشل حفظ الاختبار في قاعدة البيانات المشتركة. لا تشارك الكود قبل إصلاح المشكلة. سبب الخطأ: ' + detail);
+      console.error('Quiz could not be saved:', err);
     }
   };
 

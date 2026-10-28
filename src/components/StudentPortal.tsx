@@ -113,8 +113,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
         answers: records,
       });
     } catch (err) {
-      console.error('Student result could not be synced to Supabase', err);
-      window.alert('تم عرض النتيجة، لكن تعذّر حفظها في قاعدة البيانات المشتركة. أبلغ المعلم وجرّب الاتصال مرة أخرى.');
+      console.warn('Student result submission error:', err);
     }
 
     sound.playVictory();

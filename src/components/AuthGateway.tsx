@@ -23,13 +23,11 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({
   const [studentError, setStudentError] = useState('');
   const [isCheckingQuiz, setIsCheckingQuiz] = useState(false);
 
-  // Teacher credentials state
-  const [teacherEmail, setTeacherEmail] = useState('');
+  // Teacher credentials state (Password only)
   const [teacherPassword, setTeacherPassword] = useState('');
   const [teacherError, setTeacherError] = useState('');
 
-  const VALID_TEACHER_EMAIL = 'teacher@kidscenter.com';
-  const VALID_TEACHER_PASSWORD = 'kids123';
+  const VALID_TEACHER_PASSWORD = '01068545095';
 
   const handleStudentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,14 +68,12 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({
     e.preventDefault();
     setTeacherError('');
 
-    const cleanEmail = teacherEmail.trim().toLowerCase();
     const cleanPass = teacherPassword.trim();
-
-    if (cleanEmail === VALID_TEACHER_EMAIL && cleanPass === VALID_TEACHER_PASSWORD) {
+    if (cleanPass === VALID_TEACHER_PASSWORD) {
       sound.playClick();
       onTeacherLogin();
     } else {
-      setTeacherError('Invalid teacher email or password');
+      setTeacherError('رمز المرور غير صحيح. يرجى المحاولة مرة أخرى');
       sound.playIncorrect();
     }
   };
@@ -201,41 +197,27 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({
           </form>
         )}
 
-        {/* 2. TEACHER PORTAL (Email & Password) */}
+        {/* 2. TEACHER PORTAL (Password Only) */}
         {activePortal === 'teacher' && (
           <form onSubmit={handleTeacherSubmit} className="space-y-4 animate-in fade-in duration-200">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-slate-700" />
-                <span>Teacher Email:</span>
-              </label>
-              <input
-                type="email"
-                value={teacherEmail}
-                onChange={(e) => setTeacherEmail(e.target.value)}
-                placeholder="teacher@kidscenter.com"
-                required
-                className="w-full bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white rounded-2xl px-4 py-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 font-medium"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                <KeyRound className="w-3.5 h-3.5 text-slate-700" />
-                <span>Password:</span>
+                <KeyRound className="w-3.5 h-3.5 text-indigo-600" />
+                <span>رمز المرور / Teacher Password:</span>
               </label>
               <input
                 type="password"
                 value={teacherPassword}
                 onChange={(e) => setTeacherPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="أدخل رمز مرور المعلم..."
                 required
-                className="w-full bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white rounded-2xl px-4 py-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400"
+                autoFocus
+                className="w-full bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white rounded-2xl px-4 py-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 font-mono tracking-widest"
               />
             </div>
 
             {teacherError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-semibold">
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-semibold text-center">
                 {teacherError}
               </div>
             )}
@@ -244,22 +226,9 @@ export const AuthGateway: React.FC<AuthGatewayProps> = ({
               type="submit"
               className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-sm transition-all shadow-md shadow-indigo-600/20 active:scale-98 flex items-center justify-center gap-2 cursor-pointer mt-2"
             >
-              <span>Teacher Login</span>
+              <span>دخول لوحة التحكم (Teacher Access)</span>
               <ArrowRight className="w-4 h-4" />
             </button>
-
-            {/* Quick credentials hint */}
-            <div className="p-3 rounded-2xl bg-indigo-50/60 border border-indigo-100/80 text-[11px] text-slate-600 space-y-1">
-              <span className="font-bold text-indigo-900 block">Default Teacher Credentials:</span>
-              <div className="flex items-center justify-between">
-                <span>Email:</span>
-                <span className="font-mono font-bold text-indigo-700">teacher@kidscenter.com</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Password:</span>
-                <span className="font-mono font-bold text-indigo-700">kids123</span>
-              </div>
-            </div>
           </form>
         )}
 

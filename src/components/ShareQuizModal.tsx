@@ -31,10 +31,6 @@ export const ShareQuizModal: React.FC<ShareQuizModalProps> = ({
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const handleWhatsAppShare = () => {
-    const text = `🌟 kidscenter PRO Math Quiz:\n"${quiz.config.title}"\nStudent Access Code: ${quiz.code}\nQuestions: ${quiz.questions.length}\nDirect Quiz Link:\n${studentLink}`;
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
@@ -112,13 +108,17 @@ export const ShareQuizModal: React.FC<ShareQuizModalProps> = ({
 
           {/* Quick Action Share Buttons */}
           <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={handleWhatsAppShare}
+            <a
+              href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
+                `🌟 kidscenter PRO Math Quiz:\n"${quiz.config.title}"\nStudent Access Code: ${quiz.code}\nQuestions: ${quiz.questions.length}\nDirect Quiz Link:\n${studentLink}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 py-2.5 px-4 rounded-2xl text-xs font-bold transition-colors cursor-pointer"
             >
               <Share2 className="w-4 h-4" />
               <span>Share to WhatsApp</span>
-            </button>
+            </a>
 
             <button
               onClick={() => setShowQR(!showQR)}

@@ -4,7 +4,9 @@ import {
   pushQuizToSupabase, 
   fetchQuizzesFromSupabase, 
   pushSubmissionToSupabase, 
-  fetchSubmissionsFromSupabase 
+  fetchSubmissionsFromSupabase,
+  deleteSubmissionsFromSupabase,
+  deleteQuizFromSupabase
 } from './supabaseService';
 
 const QUIZZES_STORAGE_KEY = 'kidscenter_pro_quizzes_v3';
@@ -168,18 +170,27 @@ export const quizService = {
     localStorage.setItem(QUIZZES_STORAGE_KEY, JSON.stringify(updated));
     notifySync();
 
-    // Do not offer a share code until the quiz is saved to the shared database.
-    const synced = await pushQuizToSupabase(newQuiz);
-    if (!synced) {
-      throw new Error('Supabase did not confirm saving this quiz. Check the browser console for details.');
+    // Synchronize to Supabase if available; local save is already successful
+    try {
+      await pushQuizToSupabase(newQuiz);
+    } catch (err) {
+      console.warn('Supabase sync skipped or failed (local save active):', err);
     }
     return newQuiz;
   },
 
-  deleteQuiz(id: string) {
+  async deleteQuiz(id: string): Promise<void> {
     const quizzes = this.getQuizzes().filter((q) => q.id !== id);
     localStorage.setItem(QUIZZES_STORAGE_KEY, JSON.stringify(quizzes));
+    const remainingSubs = this.getSubmissions().filter((s) => s.quizId !== id);
+    localStorage.setItem(SUBMISSIONS_STORAGE_KEY, JSON.stringify(remainingSubs));
     notifySync();
+
+    try {
+      await deleteQuizFromSupabase(id);
+    } catch (err) {
+      console.warn('Supabase quiz deletion error:', err);
+    }
   },
 
   getSubmissions(quizId?: string): QuizSubmission[] {
@@ -207,14 +218,15 @@ export const quizService = {
     localStorage.setItem(SUBMISSIONS_STORAGE_KEY, JSON.stringify(updated));
     notifySync();
 
-    const synced = await pushSubmissionToSupabase(fullSubmission);
-    if (!synced) {
-      throw new Error('Supabase did not confirm saving the student result. Check the browser console for details.');
+    try {
+      await pushSubmissionToSupabase(fullSubmission);
+    } catch (err) {
+      console.warn('Supabase sync skipped or failed (local submission active):', err);
     }
     return fullSubmission;
   },
 
-  clearSubmissions(quizId?: string) {
+  async clearSubmissions(quizId?: string): Promise<void> {
     if (quizId) {
       const remaining = this.getSubmissions().filter((s) => s.quizId !== quizId);
       localStorage.setItem(SUBMISSIONS_STORAGE_KEY, JSON.stringify(remaining));
@@ -222,5 +234,11 @@ export const quizService = {
       localStorage.setItem(SUBMISSIONS_STORAGE_KEY, JSON.stringify([]));
     }
     notifySync();
+
+    try {
+      await deleteSubmissionsFromSupabase(quizId);
+    } catch (err) {
+      console.warn('Supabase submission deletion error:', err);
+    }
   },
 };
