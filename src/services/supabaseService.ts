@@ -4,11 +4,11 @@ import { Quiz, QuizSubmission, SupabaseConfig } from '../types/quiz';
 const SUPABASE_CONFIG_STORAGE_KEY = 'kidscenter_supabase_config_v1';
 
 export const SUPABASE_SQL_SCHEMA = `-- ========================================================
--- كود إنشاء جداول منصة kidscenter PRO في Supabase
--- قم بنسخ هذا الكود ولصقه في SQL Editor داخل مشروع Supabase واضغط RUN
+-- SQL schema for the kidscenter PRO platform
+-- Copy this script into the Supabase SQL Editor and click RUN
 -- ========================================================
 
--- 1. جدول الاختبارات (quizzes)
+-- 1. Quizzes table
 CREATE TABLE IF NOT EXISTS public.quizzes (
     id TEXT PRIMARY KEY,
     code TEXT UNIQUE NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS public.quizzes (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 2. جدول نتائج وإجابات الطلاب (submissions)
+-- 2. Student results and answers table
 CREATE TABLE IF NOT EXISTS public.submissions (
     id TEXT PRIMARY KEY,
     quiz_id TEXT NOT NULL REFERENCES public.quizzes(id) ON DELETE CASCADE,
@@ -31,16 +31,16 @@ CREATE TABLE IF NOT EXISTS public.submissions (
     submitted_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 3. فهارس تسريع البحث (Indexes)
+-- 3. Performance indexes
 CREATE INDEX IF NOT EXISTS idx_quizzes_code ON public.quizzes(code);
 CREATE INDEX IF NOT EXISTS idx_submissions_quiz_id ON public.submissions(quiz_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_student_name ON public.submissions(student_name);
 
--- 4. تمكين سياسات الحماية العامة (Row Level Security - RLS)
+-- 4. Enable Row Level Security (RLS)
 ALTER TABLE public.quizzes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.submissions ENABLE ROW LEVEL SECURITY;
 
--- 5. السماح بالقراءة والكتابة للجميع (عبر Anon Key)
+-- 5. Allow public read and write access through the anon key
 CREATE POLICY "Allow public read access on quizzes" 
 ON public.quizzes FOR SELECT USING (true);
 
@@ -107,16 +107,16 @@ function initClient(): SupabaseClient | null {
 export async function testSupabaseConnection(url: string, anonKey: string): Promise<{ success: boolean; message: string }> {
   try {
     if (!url || !anonKey) {
-      return { success: false, message: 'يرجى إدخال الرابط ومفتاح Anon Key' };
+      return { success: false, message: 'Please enter the URL and anon key' };
     }
     const testClient = createClient(url, anonKey);
     const { error } = await testClient.from('quizzes').select('id').limit(1);
     if (error) {
-      return { success: false, message: `فشل الاتصال: ${error.message} (تأكد من تطبيق كود SQL لإنشاء جدول quizzes)` };
+      return { success: false, message: `Connection failed: ${error.message} (make sure the SQL schema for the quizzes table has been applied)` };
     }
-    return { success: true, message: 'تم الاتصال بنجاح بقاعدة بيانات Supabase! 🚀' };
+    return { success: true, message: 'Successfully connected to the Supabase database! 🚀' };
   } catch (err) {
-    return { success: false, message: `خطأ أثناء الاتصال: ${(err as Error).message}` };
+    return { success: false, message: `Connection error: ${(err as Error).message}` };
   }
 }
 
@@ -253,6 +253,27 @@ export async function deleteSubmissionsFromSupabase(quizId?: string): Promise<bo
     return true;
   } catch (err) {
     console.warn('Supabase: network error deleting submissions:', err);
+    return false;
+  }
+}
+
+export async function deleteAllQuizzesFromSupabase(): Promise<boolean> {
+  const client = getSupabaseClient();
+  if (!client) return true;
+  try {
+    const { error: submissionsError } = await client.from('submissions').delete().neq('id', '');
+    if (submissionsError) {
+      console.warn('Supabase: failed to delete submissions before clearing quizzes:', submissionsError);
+      return false;
+    }
+    const { error: quizzesError } = await client.from('quizzes').delete().neq('id', '');
+    if (quizzesError) {
+      console.warn('Supabase: failed to delete all quizzes:', quizzesError);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('Supabase: network error deleting all quizzes:', err);
     return false;
   }
 }
