@@ -261,14 +261,16 @@ export async function deleteAllQuizzesFromSupabase(): Promise<boolean> {
   const client = getSupabaseClient();
   if (!client) return true;
   try {
-    const { error: submissionsError } = await client.from('submissions').delete().neq('id', '');
-    if (submissionsError) {
-      console.warn('Supabase: failed to delete submissions before clearing quizzes:', submissionsError);
-      return false;
-    }
+    // Delete quizzes first. The schema uses ON DELETE CASCADE for submissions,
+    // so a foreign-key or permission error will stop the operation before clearing results.
     const { error: quizzesError } = await client.from('quizzes').delete().neq('id', '');
     if (quizzesError) {
       console.warn('Supabase: failed to delete all quizzes:', quizzesError);
+      return false;
+    }
+    const { error: submissionsError } = await client.from('submissions').delete().neq('id', '');
+    if (submissionsError) {
+      console.warn('Supabase: failed to delete remaining submissions:', submissionsError);
       return false;
     }
     return true;
