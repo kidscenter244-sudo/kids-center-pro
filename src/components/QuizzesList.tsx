@@ -36,6 +36,9 @@ export const QuizzesList: React.FC<QuizzesListProps> = ({
 }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [deleteAllError, setDeleteAllError] = useState('');
 
   const handleCopyLink = (quiz: Quiz) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
@@ -44,6 +47,31 @@ export const QuizzesList: React.FC<QuizzesListProps> = ({
     sound.playClick();
     setCopiedId(quiz.id);
     setTimeout(() => setCopiedId(null), 2500);
+  };
+
+  const handleDeleteAll = async () => {
+    if (!confirmDeleteAll) {
+      setConfirmDeleteAll(true);
+      setDeleteAllError('');
+      return;
+    }
+    setIsDeletingAll(true);
+    setDeleteAllError('');
+    try {
+      const success = await quizService.deleteAllQuizzes();
+      if (!success) {
+        setDeleteAllError('Could not delete all quizzes from Supabase. No local data was changed.');
+        return;
+      }
+      setConfirmDeleteAll(false);
+      onRefresh();
+      sound.playClick();
+    } catch (error) {
+      console.error('Failed to delete all quizzes:', error);
+      setDeleteAllError('Failed to delete all quizzes. Please try again.');
+    } finally {
+      setIsDeletingAll(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -71,6 +99,18 @@ export const QuizzesList: React.FC<QuizzesListProps> = ({
           </p>
         </div>
 
+        <div className="flex items-center gap-2 flex-wrap">
+        {quizzes.length > 0 && (
+          <button
+            onClick={handleDeleteAll}
+            disabled={isDeletingAll}
+            className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold transition-all shadow-sm cursor-pointer disabled:opacity-60 ${confirmDeleteAll ? 'bg-rose-600 hover:bg-rose-700 text-white animate-pulse' : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'}`}
+            title="Delete all quizzes and their submissions"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>{isDeletingAll ? 'Deleting...' : confirmDeleteAll ? 'Confirm Delete All' : 'Delete All Quizzes'}</span>
+          </button>
+        )}
         <button
           onClick={onGoToBuilder}
           className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
@@ -78,7 +118,9 @@ export const QuizzesList: React.FC<QuizzesListProps> = ({
           <PlusCircle className="w-4 h-4" />
           <span>Create New Quiz</span>
         </button>
+        </div>
       </div>
+      {deleteAllError && <p role="alert" className="text-xs font-semibold text-rose-600 mb-4">{deleteAllError}</p>}
 
       {quizzes.length === 0 ? (
         <div className="bg-white border border-slate-200/90 rounded-[32px] p-10 text-center card-soft-black-shadow">
